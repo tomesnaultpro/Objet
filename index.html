@@ -74,14 +74,14 @@
         <div id="configPanel" class="card" style="border-color: var(--danger);">
             <h2><i class="fa-solid fa-key"></i> Configuration de la Base GitHub</h2>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
-                Ces informations restent stockées uniquement dans votre téléphone.
+                Ces informations restent stockées uniquement dans le stockage de votre navigateur.
             </p>
             <div class="form-group">
                 <label>Pseudo GitHub</label>
                 <input type="text" id="cfgUser" placeholder="Ex: JeanDupont">
             </div>
             <div class="form-group">
-                <label>Nom du Repository Dépôt</label>
+                <label>Nom du Repository (Dépôt)</label>
                 <input type="text" id="cfgRepo" placeholder="Ex: mon-stock-qr">
             </div>
             <div class="form-group">
@@ -159,7 +159,7 @@
     </div>
 
     <script>
-        //Variables de configuration globales récupérées de la mémoire locale
+        // Récupération de la configuration locale
         let GH_USER = localStorage.getItem('git_db_user');
         let GH_REPO = localStorage.getItem('git_db_repo');
         let GH_TOKEN = localStorage.getItem('git_db_token');
@@ -168,7 +168,7 @@
         let localStockData = {};
         let currentFileSha = ""; 
 
-        // Initialisation de la vue au démarrage
+        // Gestion de l'affichage initial
         function checkConfig() {
             if (!GH_USER || !GH_REPO || !GH_TOKEN) {
                 document.getElementById('configPanel').style.display = 'block';
@@ -181,7 +181,7 @@
             }
         }
 
-        // Sauvegarde de la config dans le localStorage du smartphone/PC
+        // Sauvegarde de la configuration
         function saveConfiguration() {
             const user = document.getElementById('cfgUser').value.trim();
             const repo = document.getElementById('cfgRepo').value.trim();
@@ -203,7 +203,7 @@
             checkConfig();
         }
 
-        // Déconnexion / Reset des clés
+        // Déconnexion
         function disconnectGit() {
             if(confirm("Supprimer les clés d'accès locales de cet appareil ?")) {
                 localStorage.removeItem('git_db_user');
@@ -227,15 +227,18 @@
                     const data = await response.json();
                     currentFileSha = data.sha;
                     localStockData = JSON.parse(atob(data.content));
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Synchronisé`;
                 } else if (response.status === 404) {
                     localStockData = {};
                     currentFileSha = "";
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#eab308"></i> Prêt (Nouvelle Base)`;
+                } else {
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Connexion`;
                 }
-                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Synchronisé`;
                 renderStockList();
             } catch (err) {
                 console.error(err);
-                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Connexion`;
+                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Réseau`;
             }
         }
 
@@ -275,8 +278,7 @@
             renderStockList();
         }
 
-        // ==================== LOGIQUE ACTIONS INTERFACE ====================
-
+        // Affichage graphique de la liste
         function renderStockList() {
             const list = document.getElementById('stockList');
             const searchQuery = document.getElementById('search').value.toLowerCase();
@@ -342,7 +344,7 @@
             }
         }
 
-        // Détection caméra QR
+        // Détection de scan
         let lastScannedCode = "";
         let lastScanTime = 0;
 
@@ -363,7 +365,7 @@
                 resultDiv.style.display = "block";
                 resultDiv.style.background = "rgba(34, 197, 94, 0.15)";
                 resultDiv.style.color = "var(--primary)";
-                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> GitHub Mis à jour : <strong>${localStockData[decodedText].name}</strong> ➔ ${actionStatus}`;
+                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> Mis à jour : <strong>${localStockData[decodedText].name}</strong> ➔ ${actionStatus}`;
             } else {
                 const newName = prompt(`Nouveau QR détecté (${decodedText}). Nom de l'objet pour l'ajouter sur GitHub :`);
                 if (newName) {
