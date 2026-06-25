@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📱 QR Stock Manager</title>
+    <title>📱 QR Stock GitDB Pro</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: #334155;
+            --bg-color: #0b0f19;
+            --card-bg: #151f32;
+            --input-bg: #1e2d4a;
+            --text-color: #f1f5f9;
+            --text-muted: #64748b;
+            --primary: #22c55e; /* Vert GitHub */
+            --primary-glow: rgba(34, 197, 94, 0.2);
+            --danger: #f43f5e;
+            --border: #243552;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -30,335 +29,365 @@
             justify-content: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 10px 0;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        header p {
-            color: var(--text-muted);
-            margin: 5px 0 0 0;
-            font-size: 0.9rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h2 {
-            font-size: 1.1rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        select, button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: #0f172a;
-            color: var(--text-color);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-sizing: border-box;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        button.btn-download {
-            background: var(--primary);
-            border: none;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        button.btn-download:hover {
-            background: var(--primary-hover);
-        }
-
-        /* Scanner QR Custom */
-        #reader {
-            border: none !important;
-            background: #0f172a;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        #reader __dashboard {
-            padding: 10px !important;
-        }
-
-        #reader button {
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 10px;
-            margin: 10px 0;
-        }
-
-        #scanResult {
-            text-align: center;
-            font-weight: 500;
-            margin-top: 10px;
-            font-size: 0.95rem;
-            min-height: 20px;
-        }
-
-        /* Liste du Stock */
-        .stock-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .badge-count {
-            background: var(--primary);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        li {
-            background: #0f172a;
-            padding: 12px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--border);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        li .info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        li .item-id {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        li select {
-            width: auto;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            background: var(--card-bg);
-        }
-
-        .actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-delete {
-            background: transparent;
-            border: none;
-            color: var(--danger);
-            cursor: pointer;
-            padding: 5px;
-            font-size: 1.1rem;
-            width: auto;
-        }
-
-        .btn-delete:hover {
-            opacity: 0.8;
-        }
+        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        header { text-align: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
+        header h1 { margin: 0; font-size: 2.1rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 12px; }
+        header p { color: var(--text-muted); margin: 8px 0 0 0; font-size: 0.95rem; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+        .card h2 { font-size: 1.2rem; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+        .db-status { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 4px 10px; border-radius: 30px; background: rgba(34, 197, 94, 0.1); color: var(--primary); font-weight: 600; float: right; margin-top: -38px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 480px) { .grid-inputs { grid-template-columns: 1fr; } }
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        label { font-size: 0.85rem; color: #94a3b8; font-weight: 500; }
+        input, select { padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-color); font-size: 0.95rem; outline: none; box-sizing: border-box; width: 100%;}
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .btn { background: #238636; color: white; border: none; padding: 14px; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .btn:hover { background: #2ea043; }
+        #reader { border: none !important; background: #0b0f19 !important; border-radius: 16px; overflow: hidden; }
+        #reader button { background: #238636; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        #scanResult { text-align: center; margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 0.95rem; font-weight: 500; display: none; }
+        .stock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .badge-count { background: var(--primary-glow); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 12px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; }
+        .search-box { position: relative; margin-bottom: 15px; }
+        .search-box input { width: 100%; padding-left: 40px; }
+        .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; }
+        li { background: #1e2d4a; padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+        .item-details { display: flex; flex-direction: column; gap: 4px; max-width: 60%; }
+        .item-name { font-weight: 700; font-size: 1.05rem; color: #fff; word-break: break-all;}
+        .item-id { font-family: monospace; font-size: 0.8rem; color: var(--text-muted); }
+        .item-actions { display: flex; align-items: center; gap: 12px; }
+        .status-select { width: auto; padding: 6px 12px; font-size: 0.85rem; border-radius: 8px; font-weight: 600; background: var(--card-bg); }
+        .btn-icon { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; padding: 6px; border-radius: 8px; }
+        .btn-icon:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
+        
+        /* Config Panel View Toggle */
+        #configPanel { display: none; }
+        #appContent { display: none; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <header>
-            <h1><i class="fa-solid fa-boxes-stacked"></i> QR Stock</h1>
-            <p>Gestion de stock instantanée par caméra</p>
-        </header>
-
-        <div class="card">
-            <h2><i class="fa-solid fa-sliders"></i> Action du Scan</h2>
-            <label for="scanStatus">Statut à appliquer lors de la détection :</label>
-            <select id="scanStatus">
-                <option value="🟢 En Stock">🟢 En Stock</option>
-                <option value="🔵 Prêté">🔵 Prêté</option>
-                <option value="🟠 En Réparation">🟠 En Réparation</option>
-                <option value="🔴 Perdu">🔴 Perdu</option>
-            </select>
-        </div>
-
-        <div class="card">
-            <h2><i class="fa-solid fa-camera"></i> Scanner</h2>
-            <div id="reader"></div>
-            <div id="scanResult"></div>
-        </div>
-
-        <div class="card">
-            <div class="stock-header">
-                <h2><i class="fa-solid fa-list"></i> Inventaire</h2>
-                <span class="badge-count" id="totalItems">0 objet</span>
+        
+        <div id="configPanel" class="card" style="border-color: var(--danger);">
+            <h2><i class="fa-solid fa-key"></i> Configuration de la Base GitHub</h2>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                Ces informations restent stockées uniquement dans votre téléphone.
+            </p>
+            <div class="form-group">
+                <label>Pseudo GitHub</label>
+                <input type="text" id="cfgUser" placeholder="Ex: JeanDupont">
             </div>
-            <ul id="stockList"></ul>
-            <button class="btn-download" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Exporter en CSV</button>
+            <div class="form-group">
+                <label>Nom du Repository Dépôt</label>
+                <input type="text" id="cfgRepo" placeholder="Ex: mon-stock-qr">
+            </div>
+            <div class="form-group">
+                <label>Token d'accès Personnel (Classic)</label>
+                <input type="password" id="cfgToken" placeholder="Collez votre ghp_...">
+            </div>
+            <button class="btn" onclick="saveConfiguration()" style="background: var(--danger);"><i class="fa-solid fa-lock"></i> Activer la liaison</button>
         </div>
+
+        <div id="appContent">
+            <header>
+                <h1><i class="fa-brands fa-github"></i> QR GitDB Stock</h1>
+                <p>Base de données mondiale sécurisée sur fichier JSON</p>
+            </header>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-plus-circle"></i> Ajouter / Créer un Objet</h2>
+                <div class="grid-inputs">
+                    <div class="form-group">
+                        <label for="newId">Identifiant QR unique</label>
+                        <input type="text" id="newId" placeholder="Ex: QR-9912">
+                    </div>
+                    <div class="form-group">
+                        <label for="newName">Nom de l'objet</label>
+                        <input type="text" id="newName" placeholder="Ex: Outil Perceuse">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newStatus">Statut initial</label>
+                    <select id="newStatus">
+                        <option value="En Stock">🟢 En Stock</option>
+                        <option value="Prêté">🔵 Prêté</option>
+                        <option value="Réparation">🟠 En Réparation</option>
+                        <option value="Perdu">🔴 Perdu</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="addItem()"><i class="fa-solid fa-cloud-upload-alt"></i> Enregistrer sur GitHub</button>
+            </div>
+
+            <div class="card">
+                <h2><i class="fa-solid fa-camera"></i> Scanner Caméra</h2>
+                <div class="form-group">
+                    <label for="scanAction">Statut à appliquer lors du scan :</label>
+                    <select id="scanAction">
+                        <option value="En Stock">Passer en : 🟢 En Stock</option>
+                        <option value="Prêté">Passer en : 🔵 Prêté</option>
+                        <option value="Réparation">Passer en : 🟠 En Réparation</option>
+                        <option value="Perdu">Passer en : 🔴 Perdu</option>
+                    </select>
+                </div>
+                <div id="reader"></div>
+                <div id="scanResult"></div>
+            </div>
+
+            <div class="card">
+                <div class="stock-header">
+                    <h2><i class="fa-solid fa-database"></i> Fichier data.json GitHub</h2>
+                    <div class="db-status" id="syncStatus"><i class="fa-solid fa-circle"></i> Connecté</div>
+                </div>
+                
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search" placeholder="Rechercher dans la base GitHub..." oninput="renderStockList()">
+                </div>
+
+                <div class="stock-header" style="margin-bottom: 10px;">
+                    <span id="totalItems" class="badge-count">Chargement...</span>
+                    <button onclick="disconnectGit()" style="background:transparent; color: var(--danger); border:none; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-sign-out-alt"></i> Changer de clés</button>
+                </div>
+                
+                <ul id="stockList"></ul>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // Chargement du stock depuis le stockage du téléphone/navigateur
-        let stock = JSON.parse(localStorage.getItem('qr_stock_data')) || {};
+        //Variables de configuration globales récupérées de la mémoire locale
+        let GH_USER = localStorage.getItem('git_db_user');
+        let GH_REPO = localStorage.getItem('git_db_repo');
+        let GH_TOKEN = localStorage.getItem('git_db_token');
+        const FILE_PATH = "data.json";
+        
+        let localStockData = {};
+        let currentFileSha = ""; 
 
-        function renderStock() {
+        // Initialisation de la vue au démarrage
+        function checkConfig() {
+            if (!GH_USER || !GH_REPO || !GH_TOKEN) {
+                document.getElementById('configPanel').style.display = 'block';
+                document.getElementById('appContent').style.display = 'none';
+            } else {
+                document.getElementById('configPanel').style.display = 'none';
+                document.getElementById('appContent').style.display = 'block';
+                initScanner();
+                fetchStockFromGitHub();
+            }
+        }
+
+        // Sauvegarde de la config dans le localStorage du smartphone/PC
+        function saveConfiguration() {
+            const user = document.getElementById('cfgUser').value.trim();
+            const repo = document.getElementById('cfgRepo').value.trim();
+            const token = document.getElementById('cfgToken').value.trim();
+
+            if(!user || !repo || !token) {
+                alert("Veuillez remplir tous les champs de connexion.");
+                return;
+            }
+
+            localStorage.setItem('git_db_user', user);
+            localStorage.setItem('git_db_repo', repo);
+            localStorage.setItem('git_db_token', token);
+
+            GH_USER = user;
+            GH_REPO = repo;
+            GH_TOKEN = token;
+
+            checkConfig();
+        }
+
+        // Déconnexion / Reset des clés
+        function disconnectGit() {
+            if(confirm("Supprimer les clés d'accès locales de cet appareil ?")) {
+                localStorage.removeItem('git_db_user');
+                localStorage.removeItem('git_db_repo');
+                localStorage.removeItem('git_db_token');
+                window.location.reload();
+            }
+        }
+
+        // 1. CHARGER LES DONNÉES DEPUIS GITHUB
+        async function fetchStockFromGitHub() {
+            document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...`;
+            const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${FILE_PATH}`;
+            
+            try {
+                const response = await fetch(url, {
+                    headers: { "Authorization": `token ${GH_TOKEN}` }
+                });
+
+                if (response.status === 200) {
+                    const data = await response.json();
+                    currentFileSha = data.sha;
+                    localStockData = JSON.parse(atob(data.content));
+                } else if (response.status === 404) {
+                    localStockData = {};
+                    currentFileSha = "";
+                }
+                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Synchronisé`;
+                renderStockList();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Connexion`;
+            }
+        }
+
+        // 2. ENREGISTRER SUR GITHUB
+        async function saveStockToGitHub() {
+            document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Envoi GitHub...`;
+            const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${FILE_PATH}`;
+            
+            const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(localStockData, null, 2))));
+            
+            const bodyData = {
+                message: "Mise à jour automatique du stock via l'application",
+                content: contentBase64
+            };
+            if (currentFileSha) bodyData.sha = currentFileSha;
+
+            try {
+                const response = await fetch(url, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${GH_TOKEN}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if(response.ok) {
+                    const resJson = await response.json();
+                    currentFileSha = resJson.content.sha;
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Sauvegardé`;
+                } else {
+                    alert("Erreur GitHub. Vérifiez votre Token ou le nom de votre Repository.");
+                }
+            } catch (err) {
+                alert("Erreur réseau GitHub.");
+            }
+            renderStockList();
+        }
+
+        // ==================== LOGIQUE ACTIONS INTERFACE ====================
+
+        function renderStockList() {
             const list = document.getElementById('stockList');
+            const searchQuery = document.getElementById('search').value.toLowerCase();
             list.innerHTML = '';
             let total = 0;
 
-            for (let id in stock) {
-                total++;
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="info">
-                        <span class="item-id">${id}</span>
-                    </div>
-                    <div class="actions">
-                        <select onchange="updateStatus('${id}', this.value)">
-                            <option value="🟢 En Stock" ${stock[id] === '🟢 En Stock' ? 'selected' : ''}>🟢 En Stock</option>
-                            <option value="🔵 Prêté" ${stock[id] === '🔵 Prêté' ? 'selected' : ''}>🔵 Prêté</option>
-                            <option value="🟠 En Réparation" ${stock[id] === '🟠 En Réparation' ? 'selected' : ''}>🟠 En Réparation</option>
-                            <option value="🔴 Perdu" ${stock[id] === '🔴 Perdu' ? 'selected' : ''}>🔴 Perdu</option>
-                        </select>
-                        <button class="btn-delete" onclick="deleteItem('${id}')"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `;
-                list.appendChild(li);
+            for (let id in localStockData) {
+                const item = localStockData[id];
+                if (item.name.toLowerCase().includes(searchQuery) || id.toLowerCase().includes(searchQuery)) {
+                    total++;
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="item-details">
+                            <span class="item-name">${item.name}</span>
+                            <span class="item-id"><i class="fa-solid fa-qrcode"></i> ${id}</span>
+                        </div>
+                        <div class="item-actions">
+                            <select class="status-select" onchange="updateStatus('${id}', this.value)">
+                                <option value="En Stock" ${item.status === 'En Stock' ? 'selected' : ''}>🟢 En Stock</option>
+                                <option value="Prêté" ${item.status === 'Prêté' ? 'selected' : ''}>🔵 Prêté</option>
+                                <option value="Réparation" ${item.status === 'Réparation' ? 'selected' : ''}>🟠 En Réparation</option>
+                                <option value="Perdu" ${item.status === 'Perdu' ? 'selected' : ''}>🔴 Perdu</option>
+                            </select>
+                            <button class="btn-icon" onclick="deleteItem('${id}')">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                }
             }
-            document.getElementById('totalItems').innerText = `${total} objet${total > 1 ? 's' : ''}`;
+            document.getElementById('totalItems').innerText = `${total} objet(s) trouvé(s)`;
         }
 
-        // Mettre à jour le statut à la main
-        function updateStatus(id, newStatus) {
-            stock[id] = newStatus;
-            saveStock();
+        async function addItem() {
+            const id = document.getElementById('newId').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const status = document.getElementById('newStatus').value;
+
+            if (!id || !name) {
+                alert("Veuillez remplir l'identifiant QR et le nom.");
+                return;
+            }
+
+            localStockData[id] = { name: name, status: status, date: new Date().toLocaleDateString() };
+            document.getElementById('newId').value = '';
+            document.getElementById('newName').value = '';
+            await saveStockToGitHub();
         }
 
-        // Supprimer un objet
-        function deleteItem(id) {
-            if(confirm(`Supprimer l'objet ${id} de l'inventaire ?`)) {
-                delete stock[id];
-                saveStock();
-                renderStock();
+        async function updateStatus(id, newStatus) {
+            if(localStockData[id]) {
+                localStockData[id].status = newStatus;
+                localStockData[id].date = new Date().toLocaleDateString();
+                await saveStockToGitHub();
             }
         }
 
-        // Sauvegarder les données
-        function saveStock() {
-            localStorage.setItem('qr_stock_data', JSON.stringify(stock));
+        async function deleteItem(id) {
+            if (confirm(`Supprimer cet objet de GitHub ?`)) {
+                delete localStockData[id];
+                await saveStockToGitHub();
+            }
         }
 
-        // Action lors du scan réussi
+        // Détection caméra QR
         let lastScannedCode = "";
         let lastScanTime = 0;
 
-        function onScanSuccess(decodedText) {
+        async function onScanSuccess(decodedText) {
             const now = Date.now();
-            // Anti-doublon : Évite de scanner le même code en boucle en moins de 2 secondes
-            if (decodedText === lastScannedCode && (now - lastScanTime < 2000)) return;
+            if (decodedText === lastScannedCode && (now - lastScanTime < 3000)) return;
 
             lastScannedCode = decodedText;
             lastScanTime = now;
 
-            const chosenStatus = document.getElementById('scanStatus').value;
-            stock[decodedText] = chosenStatus;
-            saveStock();
-            renderStock();
-
+            const actionStatus = document.getElementById('scanAction').value;
             const resultDiv = document.getElementById('scanResult');
-            resultDiv.style.color = "#10b981";
-            resultDiv.innerHTML = `<i class="fa-solid fa-check"></i> Mis à jour : <strong>${decodedText}</strong>`;
-            
-            // Vibration du téléphone si supporté
-            if (navigator.vibrate) navigator.vibrate(100);
-        }
 
-        // Exporter les données au format Excel / CSV
-        function exportCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,Identifiant,Statut\n";
-            for (let id in stock) {
-                csvContent += `"${id}","${stock[id]}"\n`;
+            if (localStockData[decodedText]) {
+                localStockData[decodedText].status = actionStatus;
+                await saveStockToGitHub();
+                
+                resultDiv.style.display = "block";
+                resultDiv.style.background = "rgba(34, 197, 94, 0.15)";
+                resultDiv.style.color = "var(--primary)";
+                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> GitHub Mis à jour : <strong>${localStockData[decodedText].name}</strong> ➔ ${actionStatus}`;
+            } else {
+                const newName = prompt(`Nouveau QR détecté (${decodedText}). Nom de l'objet pour l'ajouter sur GitHub :`);
+                if (newName) {
+                    localStockData[decodedText] = { name: newName, status: actionStatus, date: new Date().toLocaleDateString() };
+                    await saveStockToGitHub();
+                    
+                    resultDiv.style.display = "block";
+                    resultDiv.style.background = "rgba(34, 197, 94, 0.15)";
+                    resultDiv.style.color = "var(--primary)";
+                    resultDiv.innerHTML = `<i class="fa-solid fa-circle-plus"></i> Créé sur GitHub : <strong>${newName}</strong>`;
+                }
             }
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "mon_inventaire_stock.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            if (navigator.vibrate) navigator.vibrate([100]);
         }
 
-        // Initialisation du scanner
-        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-            fps: 15, 
-            qrbox: { width: 250, height: 250 },
-            rememberLastUsedCamera: true
-        });
-        html5QrcodeScanner.render(onScanSuccess);
+        function initScanner() {
+            const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                fps: 15, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true
+            });
+            html5QrcodeScanner.render(onScanSuccess);
+        }
 
-        // Premier affichage au démarrage
-        renderStock();
+        // Lancement au chargement de la page
+        checkConfig();
     </script>
 </body>
 </html>
