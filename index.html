@@ -62,7 +62,7 @@
         .btn-icon { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; padding: 6px; border-radius: 8px; }
         .btn-icon:hover { color: var(--danger); background: rgba(244, 63, 94, 0.1); }
         
-        /* Config Panel View Toggle */
+        /* Affichage dynamique des sections */
         #configPanel { display: none; }
         #appContent { display: none; }
     </style>
@@ -73,8 +73,8 @@
         
         <div id="configPanel" class="card" style="border-color: var(--danger);">
             <h2><i class="fa-solid fa-key"></i> Configuration de la Base GitHub</h2>
-            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
-                Ces informations restent stockées uniquement dans le stockage de votre navigateur.
+            <p id="configMessage" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                Veuillez lier votre dépôt GitHub. Vos clés restent stockées uniquement dans ce navigateur.
             </p>
             <div class="form-group">
                 <label>Pseudo GitHub</label>
@@ -86,7 +86,7 @@
             </div>
             <div class="form-group">
                 <label>Token d'accès Personnel (Classic)</label>
-                <input type="password" id="cfgToken" placeholder="Collez votre ghp_...">
+                <input type="password" id="cfgToken" placeholder="Collez votre clé ghp_...">
             </div>
             <button class="btn" onclick="saveConfiguration()" style="background: var(--danger);"><i class="fa-solid fa-lock"></i> Activer la liaison</button>
         </div>
@@ -118,7 +118,7 @@
                         <option value="Perdu">🔴 Perdu</option>
                     </select>
                 </div>
-                <button class="btn" onclick="addItem()"><i class="fa-solid fa-cloud-upload-alt"></i> Enregistrer sur GitHub</button>
+                <button class="btn" onclick="addItem()"><i class="fa-solid fa-cloud-upload-alt"></i> Enregistrer dans data.json</button>
             </div>
 
             <div class="card">
@@ -149,7 +149,7 @@
 
                 <div class="stock-header" style="margin-bottom: 10px;">
                     <span id="totalItems" class="badge-count">Chargement...</span>
-                    <button onclick="disconnectGit()" style="background:transparent; color: var(--danger); border:none; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-sign-out-alt"></i> Changer de clés</button>
+                    <button onclick="disconnectGit()" style="background:transparent; color: var(--danger); border:none; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-sign-out-alt"></i> Déconnexion / Changer de clés</button>
                 </div>
                 
                 <ul id="stockList"></ul>
@@ -159,7 +159,6 @@
     </div>
 
     <script>
-        // Récupération de la configuration locale
         let GH_USER = localStorage.getItem('git_db_user');
         let GH_REPO = localStorage.getItem('git_db_repo');
         let GH_TOKEN = localStorage.getItem('git_db_token');
@@ -167,21 +166,34 @@
         
         let localStockData = {};
         let currentFileSha = ""; 
+        let scannerRendered = false;
 
-        // Gestion de l'affichage initial
+        // Étape 1 : Vérification initiale des clés
         function checkConfig() {
             if (!GH_USER || !GH_REPO || !GH_TOKEN) {
-                document.getElementById('configPanel').style.display = 'block';
-                document.getElementById('appContent').style.display = 'none';
+                showConfigForm("Veuillez lier votre dépôt GitHub. Vos clés restent stockées uniquement dans ce navigateur.");
             } else {
                 document.getElementById('configPanel').style.display = 'none';
                 document.getElementById('appContent').style.display = 'block';
-                initScanner();
                 fetchStockFromGitHub();
             }
         }
 
-        // Sauvegarde de la configuration
+        // Affiche l'écran rouge avec un message personnalisé
+        function showConfigForm(message) {
+            document.getElementById('configPanel').style.display = 'block';
+            document.getElementById('appContent').style.display = 'none';
+            const msgEl = document.getElementById('configMessage');
+            msgEl.innerText = message;
+            msgEl.style.color = "#f43f5e";
+            
+            // Pré-remplir les champs si des données existent déjà pour aider l'utilisateur
+            document.getElementById('cfgUser').value = GH_USER || "";
+            document.getElementById('cfgRepo').value = GH_REPO || "";
+            document.getElementById('cfgToken').value = GH_TOKEN || "";
+        }
+
+        // Étape 2 : Sauvegarde de la configuration
         function saveConfiguration() {
             const user = document.getElementById('cfgUser').value.trim();
             const repo = document.getElementById('cfgRepo').value.trim();
@@ -203,17 +215,16 @@
             checkConfig();
         }
 
-        // Déconnexion
+        // Forcer la réinitialisation complète
         function disconnectGit() {
             if(confirm("Supprimer les clés d'accès locales de cet appareil ?")) {
-                localStorage.removeItem('git_db_user');
-                localStorage.removeItem('git_db_repo');
-                localStorage.removeItem('git_db_token');
+                localStorage.clear();
+                GH_USER = GH_REPO = GH_TOKEN = null;
                 window.location.reload();
             }
         }
 
-        // 1. CHARGER LES DONNÉES DEPUIS GITHUB
+        // 3. CHARGER LES DONNÉES DEPUIS LE DATA.JSON DE GITHUB
         async function fetchStockFromGitHub() {
             document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...`;
             const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${FILE_PATH}`;
@@ -228,21 +239,31 @@
                     currentFileSha = data.sha;
                     localStockData = JSON.parse(atob(data.content));
                     document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Synchronisé`;
-                } else if (response.status === 404) {
+                    
+                    // Si tout est bon, on lance le scanner s'il n'est pas encore allumé
+                    if (!scannerRendered) initScanner();
+                    renderStockList();
+                } 
+                else if (response.status === 404) {
+                    // Si data.json n'existe pas mais que le dépôt existe
                     localStockData = {};
                     currentFileSha = "";
-                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#eab308"></i> Prêt (Nouvelle Base)`;
-                } else {
-                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Connexion`;
+                    document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#eab308"></i> data.json absent (Prêt à créer)`;
+                    if (!scannerRendered) initScanner();
+                    renderStockList();
+                } 
+                else {
+                    // Erreur d'authentification (401 / 403) ou dépôt introuvable -> RETOUR CASE DÉPART
+                    localStorage.removeItem('git_db_token'); // On efface le token erroné
+                    showConfigForm("⚠️ Erreur GitHub (Code " + response.status + "). Votre Token ou le nom du Repository est invalide. Veuillez corriger.");
                 }
-                renderStockList();
             } catch (err) {
                 console.error(err);
                 document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#f43f5e"></i> Erreur Réseau`;
             }
         }
 
-        // 2. ENREGISTRER SUR GITHUB
+        // 4. METTRE À JOUR ET SAUVEGARDER DANS DATA.JSON SUR GITHUB
         async function saveStockToGitHub() {
             document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Envoi GitHub...`;
             const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${FILE_PATH}`;
@@ -250,7 +271,7 @@
             const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(localStockData, null, 2))));
             
             const bodyData = {
-                message: "Mise à jour automatique du stock via l'application",
+                message: "Mise à jour du stock (data.json)",
                 content: contentBase64
             };
             if (currentFileSha) bodyData.sha = currentFileSha;
@@ -267,18 +288,18 @@
 
                 if(response.ok) {
                     const resJson = await response.json();
-                    currentFileSha = resJson.content.sha;
+                    currentFileSha = resJson.content.sha; // Sauvegarde du nouveau SHA généré par GitHub
                     document.getElementById('syncStatus').innerHTML = `<i class="fa-solid fa-circle" style="color:#22c55e"></i> Sauvegardé`;
                 } else {
-                    alert("Erreur GitHub. Vérifiez votre Token ou le nom de votre Repository.");
+                    alert("Impossible d'écrire dans data.json. Vérifiez les droits d'écriture (repo) de votre Token.");
                 }
             } catch (err) {
-                alert("Erreur réseau GitHub.");
+                alert("Erreur réseau lors de la sauvegarde.");
             }
             renderStockList();
         }
 
-        // Affichage graphique de la liste
+        // INTERFACE : Rendu visuel de la liste des objets
         function renderStockList() {
             const list = document.getElementById('stockList');
             const searchQuery = document.getElementById('search').value.toLowerCase();
@@ -310,9 +331,10 @@
                     list.appendChild(li);
                 }
             }
-            document.getElementById('totalItems').innerText = `${total} objet(s) trouvé(s)`;
+            document.getElementById('totalItems').innerText = `${total} objet(s) trouvé(s) dans data.json`;
         }
 
+        // INTERFACE : Ajouter manuellement un objet
         async function addItem() {
             const id = document.getElementById('newId').value.trim();
             const name = document.getElementById('newName').value.trim();
@@ -329,6 +351,7 @@
             await saveStockToGitHub();
         }
 
+        // INTERFACE : Changer le statut via le sélecteur déroulant
         async function updateStatus(id, newStatus) {
             if(localStockData[id]) {
                 localStockData[id].status = newStatus;
@@ -337,20 +360,21 @@
             }
         }
 
+        // INTERFACE : Supprimer un objet
         async function deleteItem(id) {
-            if (confirm(`Supprimer cet objet de GitHub ?`)) {
+            if (confirm(`Supprimer cet objet du fichier data.json ?`)) {
                 delete localStockData[id];
                 await saveStockToGitHub();
             }
         }
 
-        // Détection de scan
+        // CAMERA : Gestion du Scan QR Code
         let lastScannedCode = "";
         let lastScanTime = 0;
 
         async function onScanSuccess(decodedText) {
             const now = Date.now();
-            if (decodedText === lastScannedCode && (now - lastScanTime < 3000)) return;
+            if (decodedText === lastScannedCode && (now - lastScanTime < 3000)) return; // Anti-spam 3 secondes
 
             lastScannedCode = decodedText;
             lastScanTime = now;
@@ -365,9 +389,9 @@
                 resultDiv.style.display = "block";
                 resultDiv.style.background = "rgba(34, 197, 94, 0.15)";
                 resultDiv.style.color = "var(--primary)";
-                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> Mis à jour : <strong>${localStockData[decodedText].name}</strong> ➔ ${actionStatus}`;
+                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check"></i> data.json mis à jour : <strong>${localStockData[decodedText].name}</strong> ➔ ${actionStatus}`;
             } else {
-                const newName = prompt(`Nouveau QR détecté (${decodedText}). Nom de l'objet pour l'ajouter sur GitHub :`);
+                const newName = prompt(`Nouveau QR détecté (${decodedText}). Quel est le nom de cet objet pour l'ajouter dans data.json ?`);
                 if (newName) {
                     localStockData[decodedText] = { name: newName, status: actionStatus, date: new Date().toLocaleDateString() };
                     await saveStockToGitHub();
@@ -375,20 +399,25 @@
                     resultDiv.style.display = "block";
                     resultDiv.style.background = "rgba(34, 197, 94, 0.15)";
                     resultDiv.style.color = "var(--primary)";
-                    resultDiv.innerHTML = `<i class="fa-solid fa-circle-plus"></i> Créé sur GitHub : <strong>${newName}</strong>`;
+                    resultDiv.innerHTML = `<i class="fa-solid fa-circle-plus"></i> Créé dans data.json : <strong>${newName}</strong>`;
                 }
             }
             if (navigator.vibrate) navigator.vibrate([100]);
         }
 
         function initScanner() {
-            const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
-                fps: 15, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true
-            });
-            html5QrcodeScanner.render(onScanSuccess);
+            try {
+                const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                    fps: 15, qrbox: { width: 220, height: 220 }, rememberLastUsedCamera: true
+                });
+                html5QrcodeScanner.render(onScanSuccess);
+                scannerRendered = true;
+            } catch (e) {
+                console.error("Erreur d'initialisation caméra :", e);
+            }
         }
 
-        // Lancement au chargement de la page
+        // Démarrage automatique
         checkConfig();
     </script>
 </body>
