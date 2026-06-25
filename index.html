@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 QR Stock Manager</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin: 5px 0 0 0;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #0f172a;
+            color: var(--text-color);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button.btn-download {
+            background: var(--primary);
+            border: none;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        button.btn-download:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Scanner QR Custom */
+        #reader {
+            border: none !important;
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #reader __dashboard {
+            padding: 10px !important;
+        }
+
+        #reader button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        #scanResult {
+            text-align: center;
+            font-weight: 500;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            min-height: 20px;
+        }
+
+        /* Liste du Stock */
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .badge-count {
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        li {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        li .info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        li .item-id {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        li select {
+            width: auto;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            background: var(--card-bg);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-delete {
+            background: transparent;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 5px;
+            font-size: 1.1rem;
+            width: auto;
+        }
+
+        .btn-delete:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1><i class="fa-solid fa-boxes-stacked"></i> QR Stock</h1>
+            <p>Gestion de stock instantanée par caméra</p>
+        </header>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-sliders"></i> Action du Scan</h2>
+            <label for="scanStatus">Statut à appliquer lors de la détection :</label>
+            <select id="scanStatus">
+                <option value="🟢 En Stock">🟢 En Stock</option>
+                <option value="🔵 Prêté">🔵 Prêté</option>
+                <option value="🟠 En Réparation">🟠 En Réparation</option>
+                <option value="🔴 Perdu">🔴 Perdu</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h2><i class="fa-solid fa-camera"></i> Scanner</h2>
+            <div id="reader"></div>
+            <div id="scanResult"></div>
+        </div>
+
+        <div class="card">
+            <div class="stock-header">
+                <h2><i class="fa-solid fa-list"></i> Inventaire</h2>
+                <span class="badge-count" id="totalItems">0 objet</span>
+            </div>
+            <ul id="stockList"></ul>
+            <button class="btn-download" onclick="exportCSV()"><i class="fa-solid fa-file-csv"></i> Exporter en CSV</button>
+        </div>
+    </div>
+
+    <script>
+        // Chargement du stock depuis le stockage du téléphone/navigateur
+        let stock = JSON.parse(localStorage.getItem('qr_stock_data')) || {};
+
+        function renderStock() {
+            const list = document.getElementById('stockList');
+            list.innerHTML = '';
+            let total = 0;
+
+            for (let id in stock) {
+                total++;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="info">
+                        <span class="item-id">${id}</span>
+                    </div>
+                    <div class="actions">
+                        <select onchange="updateStatus('${id}', this.value)">
+                            <option value="🟢 En Stock" ${stock[id] === '🟢 En Stock' ? 'selected' : ''}>🟢 En Stock</option>
+                            <option value="🔵 Prêté" ${stock[id] === '🔵 Prêté' ? 'selected' : ''}>🔵 Prêté</option>
+                            <option value="🟠 En Réparation" ${stock[id] === '🟠 En Réparation' ? 'selected' : ''}>🟠 En Réparation</option>
+                            <option value="🔴 Perdu" ${stock[id] === '🔴 Perdu' ? 'selected' : ''}>🔴 Perdu</option>
+                        </select>
+                        <button class="btn-delete" onclick="deleteItem('${id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(li);
+            }
+            document.getElementById('totalItems').innerText = `${total} objet${total > 1 ? 's' : ''}`;
+        }
+
+        // Mettre à jour le statut à la main
+        function updateStatus(id, newStatus) {
+            stock[id] = newStatus;
+            saveStock();
+        }
+
+        // Supprimer un objet
+        function deleteItem(id) {
+            if(confirm(`Supprimer l'objet ${id} de l'inventaire ?`)) {
+                delete stock[id];
+                saveStock();
+                renderStock();
+            }
+        }
+
+        // Sauvegarder les données
+        function saveStock() {
+            localStorage.setItem('qr_stock_data', JSON.stringify(stock));
+        }
+
+        // Action lors du scan réussi
+        let lastScannedCode = "";
+        let lastScanTime = 0;
+
+        function onScanSuccess(decodedText) {
+            const now = Date.now();
+            // Anti-doublon : Évite de scanner le même code en boucle en moins de 2 secondes
+            if (decodedText === lastScannedCode && (now - lastScanTime < 2000)) return;
+
+            lastScannedCode = decodedText;
+            lastScanTime = now;
+
+            const chosenStatus = document.getElementById('scanStatus').value;
+            stock[decodedText] = chosenStatus;
+            saveStock();
+            renderStock();
+
+            const resultDiv = document.getElementById('scanResult');
+            resultDiv.style.color = "#10b981";
+            resultDiv.innerHTML = `<i class="fa-solid fa-check"></i> Mis à jour : <strong>${decodedText}</strong>`;
+            
+            // Vibration du téléphone si supporté
+            if (navigator.vibrate) navigator.vibrate(100);
+        }
+
+        // Exporter les données au format Excel / CSV
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Identifiant,Statut\n";
+            for (let id in stock) {
+                csvContent += `"${id}","${stock[id]}"\n`;
+            }
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "mon_inventaire_stock.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialisation du scanner
+        const html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+            fps: 15, 
+            qrbox: { width: 250, height: 250 },
+            rememberLastUsedCamera: true
+        });
+        html5QrcodeScanner.render(onScanSuccess);
+
+        // Premier affichage au démarrage
+        renderStock();
+    </script>
+</body>
+</html>
